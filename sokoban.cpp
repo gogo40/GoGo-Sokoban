@@ -6,6 +6,8 @@
 #include <utility>
 #include <algorithm>
 #include <queue>
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
@@ -254,19 +256,15 @@ bool makeMove(cState& s, int x, int y, int k) {
 int calcDist(cState& s, int x, int y, int xf, int yf) {
 	map<int, int> D;
 	queue<int> Q;
-	//static int Q[1000000];
 	int ini, fim;
 	ini = fim = 0;
 	
 	Q.push(x * M + y);
-	//Q[fim] = x * M + y; ++fim;
 	
 	D[x * M + y] = 0;
 
 	while (not Q.empty()) {
-	//while (ini < fim) {
 		int u = Q.front();
-		//int u = Q[ini]; ++ini;
 		
 		int du = D[u];
 		int ux = u / M;
@@ -286,7 +284,6 @@ int calcDist(cState& s, int x, int y, int xf, int yf) {
 					if (D.find(v) == D.end() || D[v] > du + 1) {
 						D[v] = du + 1;
 						Q.push(v);
-						//Q[fim] = v; ++fim;
 					}
 				}
 		}
@@ -326,6 +323,7 @@ void findBox(vector<int>& vb, cState& s) {
 
 int main()
 {
+	srand(time(NULL));
 	initCState();
 	
 	cin>>N>>M;
@@ -340,8 +338,7 @@ int main()
 			s.insert(i, j, a[j]);
 		}
 	}
-	s.print();
-
+	
 	/*
 	Alfabeto do jogo:
 		'.' espaco vazio
@@ -414,7 +411,7 @@ int main()
 	int dmin = 1<<20;
 
 
-	for (int L = 140; L < 1000; L *= 2) {
+	for (int L = 250; L < 1000; L *= 2) {
 
 		if (ok) break;
 
@@ -428,53 +425,48 @@ int main()
 		while (!Q.empty()) {
 			int uest = -Q.top().first;
 			State u = Q.top().second;
-
+			int du = D[u];
+			
 			if (u == fim){
 				ok = true;
-				//break;
+				dmin = du;
+				break;
 			}
 
 			int p = u.second;
-			int du = D[u];
 			int x = p/M;
 			int y = p%M;
-
-			cState mu = vs[u.first];
-
+			
 			Q.pop();
 
 			if ( uest > L or uest >= dmin) continue;
 			else if (u == fim){
 				dmin = du;
-				//break;
 			}
-			if (ck % 10000 == 0) {
+			
+			if (ck % 50000 == 0) {
 				cerr << du << " dmin= " << dmin << endl;
-				mu.print();
 			}
 			++ck;
-
-			//break;
-
 			
 
 			for (int nb = 0; nb < vbox[u.first].size(); ++nb){
 					int i = vbox[u.first][nb] / M;
 					int j = vbox[u.first][nb] % M;
-					if (mu.get(i, j) == 'o' || mu.get(i, j) == 'O') {
+					if (vs[u.first].get(i, j) == 'o' || vs[u.first].get(i, j) == 'O') {
 						int q = i * M + j;
 
 						for (int k = 0; k < 4; ++k) {
 
-							cState m = mu;
+							cState m = vs[u.first];
 							
 							if (makeMove(m, i, j, k)) {
-								m.insert(i, j, (mu.get(i, j) =='o')?'.':'x');
+								m.insert(i, j, (vs[u.first].get(i, j) =='o')?'.':'x');
 								
 								int xf = i - dx[k];
 								int yf = j - dy[k];
 
-								int dup = calcDist(mu, x, y, xf, yf);
+								int dup = calcDist(vs[u.first], x, y, xf, yf);
 								if (dup > -1) {
 									State v;
 									
