@@ -4,9 +4,127 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <algorithm>
 #include <queue>
 
 using namespace std;
+
+/*
+Estrutura de dados para representar um estado do problema
+Alfabeto do jogo:
+		'.' espaco vazio
+		'#' parede
+		'I' personagem
+		'J' personagem no destino
+		'x' destino caixa
+		'o' caixa
+		'O' caixa no destino
+*/
+static int mask[600];
+static char rm[8];
+
+void initCState() {
+	mask['.'] = 0; rm[0] = '.';
+	mask['#'] = 1; rm[1] = '#';
+	mask['I'] = 2; rm[2] = 'I';
+	mask['J'] = 3; rm[3] = 'J';
+	mask['x'] = 4; rm[4] = 'x';
+	mask['o'] = 5; rm[5] = 'o';
+	mask['O'] = 6; rm[6] = 'O';
+
+}
+
+class cState {
+	public:
+	
+		cState(const cState& s) {
+			N = s.N;
+			M = s.M;
+			v = s.v;
+		}
+		
+		cState(int N = 0, int M = 0)
+		: N(N), M(M), v( (N*M)/10 + 1, 0) {}
+		
+		char get(int i, int j) {
+			int k = i * M + j;
+			int p = k / 10;
+			int n = k % 10;
+			int value = (v[p] >> (3 * n) ) & 7;
+			
+			return rm[value];
+		}
+		
+		void insert(int i, int j, char c) {
+			int value = mask[c];
+			int k = i * M + j;
+			int p = k / 10;
+			int n = k % 10;
+			int w = v[p] & (7 << (3*n));
+			v[p] ^= w;
+			v[p] |= value << (3 * n); 
+		}
+		
+		
+		cState& operator=(const cState& x) {
+			N = x.N;
+			M = x.M;
+			v = x.v;
+			return *this;
+		}
+		
+		void print() {
+			for (int i = 0; i < N; ++i) {
+				for (int j = 0; j < M; ++j) {
+					printf("%c", get(i, j));
+				}
+				printf("\n");
+			}
+		}
+	
+	friend bool operator<(const cState& a, const cState& b);
+	friend bool operator==(const cState& a, const cState& b);
+	
+	bool operator()(const cState& b) {
+		if (N > b.N or M > b.M) return false;
+		if (*this == b) return false;
+		
+		for (int i = 0; i < v.size(); ++i) 
+			if (v[i] > b.v[i]) {
+				printf("false...\n");
+				return false;
+			}
+		printf("true...\n");
+		return true;
+	}
+	
+	private:
+	
+		
+		int N, M;
+		
+		vector<int> v;
+};
+
+
+
+bool operator==(const cState& a, const cState& b) {
+
+	for (int i = 0; i < a.v.size(); ++i) 
+		if (a.v[i] != b.v[i]) {
+			return false;
+		}
+
+	return true;
+}
+
+
+bool operator<(const cState& a, const cState& b) {
+	
+	return lexicographical_compare(a.v.begin(), a.v.end(), b.v.begin(), b.v.end());
+}
+
+///////////////////////////////////////////////////////
 
 int N, M;
 
@@ -17,35 +135,32 @@ int dy[] = { 0,  0, -1,  1};
 typedef pair<int, int> State;
 typedef pair<int, State> pState;
 
-vector<string> vs;
+vector<cState> vs;
 vector<vector<int> > vbox;
-map<string, int> ids;
+map<cState, int> ids;
 
 
-void print(vector<string>& s) {
-
-	for (int i = 0; i < s.size(); ++i) {
-		cout << s[i] << endl;
-	}
+void print(cState& s) {
+	s.print();
 	cout << endl;
 }
 
-string getStr(vector<string>& s) {
+string getStr(cState& s) {
 	string out = "";
-	for (int i = 0; i < s.size(); ++i) {
-		out += s[i];
-	}
+	for (int i = 0; i < N; ++i)
+		for (int j = 0; j < M; ++j)
+			out += s.get(i, j);
 	return out;
 }
 
-vector<string> getVec(string& s) {
-	vector<string> v(N);
+cState getVec(string& s) {
+	cState v(N, M);
 
 	int n = 0;
 
 	for (int i = 0; i < N; ++i)
 		for (int j = 0; j < M; ++j){
-			v[i]+= s[n];
+			v.insert(i, j, s[n]);
 			++n;
 		}
 
@@ -57,7 +172,7 @@ vector<int> pfy;
 
 inline int abs(int a) { return a>0?a:-a; }
 
-int h(vector<string>& s, int p, int id) {
+int h(cState& s, int p, int id) {
 	int d = 0;
 	int x = p/M;
 	int y = p%M;
@@ -66,7 +181,7 @@ int h(vector<string>& s, int p, int id) {
 	for (int n = 0; n < vbox[id].size(); ++n) {
 			int i = vbox[id][n] / M;
 			int j = vbox[id][n] % M;
-			if (s[i][j] == 'o') {
+			if (s.get(i, j) == 'o') {
 				int dv = 2*(N + M);
 				for (int k = 0; k < pfx.size(); ++k) {
 					int dx = abs(pfx[k] - i);
@@ -82,7 +197,7 @@ int h(vector<string>& s, int p, int id) {
 }
 
 
-bool isDead(vector<string>& s, int id) {
+bool isDead(cState& s, int id) {
 	bool ok = false;
 /*
 ##
@@ -101,11 +216,11 @@ o#
 	for (int n = 0; n < vbox[id].size(); ++n) {
 		int i = vbox[id][n] / M;
 		int j = vbox[id][n] % M;
-		if (s[i][j] == 'o') {
-			if ((s[i-1][j] == '#' and s[i][j+1] == '#') or
-				(s[i+1][j] == '#' and s[i][j+1] == '#') or
-				(s[i+1][j] == '#' and s[i][j-1] == '#') or
-				(s[i-1][j] == '#' and s[i][j-1] == '#')
+		if (s.get(i, j) == 'o') {
+			if ((s.get(i-1, j) == '#' and s.get(i, j+1) == '#') or
+				(s.get(i+1, j) == '#' and s.get(i, j+1) == '#') or
+				(s.get(i+1, j) == '#' and s.get(i, j-1) == '#') or
+				(s.get(i-1, j) == '#' and s.get(i, j-1) == '#')
 				) {
 					ok = true;
 					break;
@@ -117,7 +232,7 @@ o#
 
 
 
-bool makeMove(vector<string>& s, int x, int y, int k) {
+bool makeMove(cState& s, int x, int y, int k) {
 
 	int px = x + dx[k];
 	int py = y + dy[k];
@@ -126,9 +241,9 @@ bool makeMove(vector<string>& s, int x, int y, int k) {
 		return false;
 	}
 
-	switch (s[px][py]) {
-		case '.': s[px][py] = 'o'; break;
-		case 'x': s[px][py] = 'O'; break;
+	switch (s.get(px, py)) {
+		case '.': s.insert(px, py, 'o'); break;
+		case 'x': s.insert(px, py, 'O'); break;
 		default: return false;
 	}
 
@@ -136,16 +251,23 @@ bool makeMove(vector<string>& s, int x, int y, int k) {
 }
 
 
-int calcDist(vector<string>& s, int x, int y, int xf, int yf) {
+int calcDist(cState& s, int x, int y, int xf, int yf) {
 	map<int, int> D;
 	queue<int> Q;
-
+	//static int Q[1000000];
+	int ini, fim;
+	ini = fim = 0;
+	
 	Q.push(x * M + y);
+	//Q[fim] = x * M + y; ++fim;
+	
 	D[x * M + y] = 0;
 
 	while (not Q.empty()) {
+	//while (ini < fim) {
 		int u = Q.front();
-
+		//int u = Q[ini]; ++ini;
+		
 		int du = D[u];
 		int ux = u / M;
 		int uy = u % M;
@@ -153,16 +275,18 @@ int calcDist(vector<string>& s, int x, int y, int xf, int yf) {
 		if (ux  ==  xf and uy == yf) break;
 
 		Q.pop();
+		
 		for (int k = 0; k < 4; ++k) {
 			int vx = ux + dx[k];
 			int vy = uy + dy[k];
 			int v = vx * M +vy;
 
 			if (vx > -1 and vx < N and vy > -1 and vy < M)
-				if (s[vx][vy] == '.' || s[vx][vy] == 'x') {
+				if (s.get(vx, vy) == '.' || s.get(vx, vy) == 'x') {
 					if (D.find(v) == D.end() || D[v] > du + 1) {
 						D[v] = du + 1;
 						Q.push(v);
+						//Q[fim] = v; ++fim;
 					}
 				}
 		}
@@ -181,35 +305,42 @@ void print_sol(State& u, int p, int du) {
 
 	if (u == fim) return;
 
-	vector<string> m = getVec(vs[u.first]);
+	cState m = vs[u.first];
 	int po = u.second;
 	int x = po/M;
 	int y = po%M;
 
-	m[x][y] = 'I';
+	m.insert(x, y, 'I');
 
 	cout<< du - p<< endl;
 	print(m);
 }
 
-void findBox(vector<int>& vb, vector<string>& s) {
+void findBox(vector<int>& vb, cState& s) {
 	for (int i = 0; i < N; ++i)
 		for (int j = 0; j < M; ++j)
-			if (s[i][j] == 'o' || s[i][j] == 'O') {
+			if (s.get(i, j) == 'o' || s.get(i, j) == 'O') {
 				vb.push_back(i * M + j);
 			}
 }
 
 int main()
 {
+	initCState();
+	
 	cin>>N>>M;
 
-	vector<string> s(N), f(N);
+	cState s(N, M), f(N, M);
 
 	for (int i = 0; i < N; ++i) {
-		cin>>s[i];
-		f[i] = s[i];
+		string a;
+		cin>>a;
+		for (int j = 0; j < M; ++j) {
+			f.insert(i, j, a[j]);
+			s.insert(i, j, a[j]);
+		}
 	}
+	s.print();
 
 	/*
 	Alfabeto do jogo:
@@ -229,36 +360,43 @@ int main()
 
 	for (int i = 0; i < N; ++i)
 		for (int j = 0; j < M; ++j)
-			if (s[i][j] == 'I') {
-				f[i][j] = s[i][j] = '.';
+			if (s.get(i, j) == 'I') {
+				f.insert(i, j, '.');
+				s.insert(i, j, '.');
+				
 				po = i * M +j;
 				xo = i;
 				yo = j;
-			}else if (s[i][j] == 'J') {
-				s[i][j] = 'x';
-				f[i][j] = 'O';
+			}else if (s.get(i, j) == 'J') {
+				s.insert(i, j, 'x');
+				f.insert(i, j, 'O');
+				
 				po = i * M +j;
 				xo = i;
 				yo = j;
-			} else if (s[i][j] == 'x') {
-				f[i][j] = 'O';
+			} else if (s.get(i, j) == 'x') {
+				f.insert(i, j, 'O');
+				
 				pfx.push_back(i);
 				pfy.push_back(j);
-			} else if (s[i][j] == 'o') {
-				f[i][j] = '.';
-			} else f[i][j] = s[i][j];
+			} else if (s.get(i, j) == 'o') {
+				f.insert(i, j, '.');
+				
+			} else {
+				f.insert(i, j, s.get(i,j));
+			}
 
-
-	vs.push_back(getStr(s));
+	vs.push_back(s);
 	vbox.push_back(vector<int>());
 	findBox(vbox[0], s);
-	ids[getStr(s)] = 0;
+	ids[s] = 0;
 
-	vs.push_back(getStr(f));
+	vs.push_back(f);
 	vbox.push_back(vector<int>());
 	findBox(vbox[1], f);
-	ids[getStr(f)] = 1;
+	ids[f] = 1;
 
+	
 	ini.first = 0;
 	ini.second = po;
 
@@ -301,7 +439,7 @@ int main()
 			int x = p/M;
 			int y = p%M;
 
-			string s = vs[u.first];
+			cState mu = vs[u.first];
 
 			Q.pop();
 
@@ -311,49 +449,44 @@ int main()
 				//break;
 			}
 			if (ck % 10000 == 0) {
-				cerr << du << " dmin=" << dmin << endl;
-				cerr << s << endl;
+				cerr << du << " dmin= " << dmin << endl;
+				mu.print();
 			}
 			++ck;
 
 			//break;
 
-			vector<string> mu = getVec(s);
+			
 
 			for (int nb = 0; nb < vbox[u.first].size(); ++nb){
 					int i = vbox[u.first][nb] / M;
 					int j = vbox[u.first][nb] % M;
-					if (mu[i][j] == 'o' || mu[i][j] == 'O') {
+					if (mu.get(i, j) == 'o' || mu.get(i, j) == 'O') {
 						int q = i * M + j;
 
 						for (int k = 0; k < 4; ++k) {
 
-							vector<string> m = getVec(s);
-
+							cState m = mu;
+							
 							if (makeMove(m, i, j, k)) {
-								m[i][j] = (mu[i][j]=='o')?'.':'x';
-
+								m.insert(i, j, (mu.get(i, j) =='o')?'.':'x');
+								
 								int xf = i - dx[k];
 								int yf = j - dy[k];
 
 								int dup = calcDist(mu, x, y, xf, yf);
-
 								if (dup > -1) {
-									//dup++;
 									State v;
-									string ms = getStr(m);
-
-									if (ids.find(ms) == ids.end()) {
-										ids[ms] = vs.size();
+									
+									if (ids.find(m) == ids.end()) {
+										v.first = ids[m] = vs.size();
 										vbox.push_back(vector<int>());
 										findBox(vbox[vs.size()], m);
-										vs.push_back(ms);
-									}
-
-									v.first = ids[ms];
-
+										vs.push_back(m);
+									} else v.first = ids[m];
+									
 									if (isDead(m, v.first)) continue;
-
+									
 									if (v.first == fim.first) q = -1;
 
 									v.second = q;
