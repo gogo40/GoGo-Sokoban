@@ -380,7 +380,7 @@ int main()
 	if (ok) {
 		print_sol(fim, 0, D[fim]);
 	} else {
-		cout << "Nao ha solucao... =(\n";
+		cout << "[Nao ha solucao... =(]\n";
 	}
 
 	return 0;
