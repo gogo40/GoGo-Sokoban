@@ -1,3 +1,52 @@
+/*
+# -*- coding: utf-8 -*-
+
+"""
+Algoritmo A* aplicado na resolução de um sokoban + representação de estados 
+por meio de grafo de estados.
+
+Autores: 
+    Peter Hart, Nils Nilsson and Bertram Raphael 
+Colaborador:
+ 	Péricles Lopes Machado [gogo40] (pericles.raskolnikoff.gmail.com)
+Tipo: 
+    graphs
+Descrição: 
+    O Algoritmo A* é uma generalização do algoritmo de Dijkstra que
+permite acelerar a busca com uma heuristica que utiliza propriedades do grafo 
+para estimar a distância para o destino. Este algoritmo é ideal quando aplicados
+em grades ou representações espaciais e em situações em que já conhecemos a
+posição do destino. 
+	O grafo de estados é uma representação importante que permite implementar
+mais facilmente AIs que buscam soluções ótimas pra puzzles.
+	O sokoban é um problema NP difícil, então basicamente procura-se utilizar
+heurísticas que estimam a solução correta para acelarar as buscas. Este
+algoritmo realiza algumas podas para evitar expandir muito o grafo de estados.
+Obviamente, ele é muito simples ainda, já que há heurísticas bem mais sofisticadas
+disponíveis na literatura[4].
+
+Complexidade: 
+    O(2^N)
+Dificuldade: 
+    Difícil
+Referências:
+    [1] http://en.wikipedia.org/wiki/A*_search_algorithm
+    [2] http://falapericles.blogspot.com.br/2009/05/o-algoritmo.html
+	[3] http://falapericles.blogspot.com.br/2009/05/grafo-de-estados-e-suas-aplicacoes.html
+	[4] http://webdocs.cs.ualberta.ca/~games/Sokoban/
+"""
+*/
+
+
+/*
+Para testar esse programa, por favor utilize o script runtests.sh.
+Como ele é uma heurística, ainda é necessário melhorias para que ele
+consiga resolver todos problemas disponíveis nesse branch.
+
+A repositório onde se encontra o desenvolvimento contínuo desse
+programa se encontra aqui: git@github.com:gogo40/gogoSokoban.git
+*/
+
 #include <iostream>
 #include <cstdio>
 #include <vector>
@@ -36,6 +85,10 @@ void initCState() {
 
 }
 
+/*
+Nós representamos um estado por meio de palavra de (N*M)/10 bytes, onde
+N e M são as dimensões da grade do sokoban
+*/
 class cState {
 	public:
 	
@@ -109,7 +162,7 @@ class cState {
 };
 
 
-
+/* Verifica se dois estados são iguais*/
 bool operator==(const cState& a, const cState& b) {
 
 	for (int i = 0; i < a.v.size(); ++i) 
@@ -120,7 +173,7 @@ bool operator==(const cState& a, const cState& b) {
 	return true;
 }
 
-
+/* realiza a comparação lexicográfica dos dois estados*/
 bool operator<(const cState& a, const cState& b) {
 	
 	return lexicographical_compare(a.v.begin(), a.v.end(), b.v.begin(), b.v.end());
@@ -130,6 +183,7 @@ bool operator<(const cState& a, const cState& b) {
 
 int N, M;
 
+/* Movimentações possíveis pelo jogador do sokoban*/
 int dx[] = {-1,  1,  0,  0};
 int dy[] = { 0,  0, -1,  1};
 
@@ -141,12 +195,13 @@ vector<cState> vs;
 vector<vector<int> > vbox;
 map<cState, int> ids;
 
-
+/*Imprime um estado*/
 void print(cState& s) {
 	s.print();
 	cout << endl;
 }
 
+/*Transforma um estado numa string*/
 string getStr(cState& s) {
 	string out = "";
 	for (int i = 0; i < N; ++i)
@@ -155,6 +210,7 @@ string getStr(cState& s) {
 	return out;
 }
 
+/* Transforma uma string num grafo de estado*/
 cState getVec(string& s) {
 	cState v(N, M);
 
@@ -169,11 +225,13 @@ cState getVec(string& s) {
 	return v;
 }
 
+/*Destinos das caixas*/
 vector<int> pfx;
 vector<int> pfy;
 
 inline int abs(int a) { return a>0?a:-a; }
 
+/*Calcula estimativa de jogadas que faltam pra concluir o sokoban*/
 int h(cState& s, int p, int id) {
 	int d = 0;
 	int x = p/M;
@@ -199,6 +257,7 @@ int h(cState& s, int p, int id) {
 }
 
 
+/*Verifica se chegamos num estado "morto"*/
 bool isDead(cState& s, int id) {
 	bool ok = false;
 /*
@@ -233,7 +292,7 @@ o#
 }
 
 
-
+/*Realiza um movimento*/
 bool makeMove(cState& s, int x, int y, int k) {
 
 	int px = x + dx[k];
@@ -252,7 +311,8 @@ bool makeMove(cState& s, int x, int y, int k) {
 	return true;
 }
 
-
+/*Calcula a distância entre uma caixa e um posição final para a mesma.
+Simula o jogador realizando o movimento na caixa*/
 int calcDist(cState& s, int x, int y, int xf, int yf) {
 	map<int, int> D;
 	queue<int> Q;
@@ -295,6 +355,7 @@ int calcDist(cState& s, int x, int y, int xf, int yf) {
 State ini, fim;
 map<State, State> pi;
 
+/* Imprime a solução */
 void print_sol(State& u, int p, int du) {
 	if (u == ini) return;
 
@@ -313,6 +374,7 @@ void print_sol(State& u, int p, int du) {
 	print(m);
 }
 
+/* Localiza a caixa na grade*/
 void findBox(vector<int>& vb, cState& s) {
 	for (int i = 0; i < N; ++i)
 		for (int j = 0; j < M; ++j)
@@ -326,6 +388,7 @@ int main()
 	srand(time(NULL));
 	initCState();
 	
+	/*Lê o estado inicial do jogo*/
 	cin>>N>>M;
 
 	cState s(N, M), f(N, M);
@@ -355,6 +418,7 @@ int main()
 	pfx.clear();
 	pfy.clear();
 
+	/* Localiza elementos importantes da grade*/
 	for (int i = 0; i < N; ++i)
 		for (int j = 0; j < M; ++j)
 			if (s.get(i, j) == 'I') {
@@ -383,6 +447,7 @@ int main()
 				f.insert(i, j, s.get(i,j));
 			}
 
+	/*Localiza caixas*/
 	vs.push_back(s);
 	vbox.push_back(vector<int>());
 	findBox(vbox[0], s);
@@ -410,17 +475,17 @@ int main()
 	int ck = 1;
 	int dmin = 1<<20;
 
-
+	/* Tenta-se estimar quantas jogadas são necessárias para se concluir o jogo
+		caso a profundidade da busca ultrapasse L, então a busca é encerrada.
+		O L é o "branch factor" do algoritmo.*/
 	for (int L = 250; L < 1000; L *= 2) {
 
 		if (ok) break;
-
 
 		priority_queue<pState> Q;
 		D.clear();
 		Q.push(pState(0, ini));
 		D[ini] = 0;
-
 
 		while (!Q.empty()) {
 			int uest = -Q.top().first;
@@ -434,8 +499,8 @@ int main()
 			}
 
 			int p = u.second;
-			int x = p/M;
-			int y = p%M;
+			int x = p / M;
+			int y = p % M;
 			
 			Q.pop();
 
@@ -449,7 +514,9 @@ int main()
 			}
 			++ck;
 			
-
+			/*
+			Para cada estado u, realiza-se uma busca nos 4 estados adjascentes.
+			*/
 			for (int nb = 0; nb < vbox[u.first].size(); ++nb){
 					int i = vbox[u.first][nb] / M;
 					int j = vbox[u.first][nb] % M;
