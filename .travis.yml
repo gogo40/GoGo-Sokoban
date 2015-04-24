@@ -13,8 +13,8 @@ compiler:
   - g++
 
 script:
-  - g++ -O2 -o sokoban sokoban.cpp
-  - clang -o sokoban sokoban.cpp
+    - g++ -O2 -o sokoban sokoban.cpp
+    - clang -o sokoban sokoban.cpp
   
 branches:
   only:
