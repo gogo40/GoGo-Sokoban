@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/gogo40/gogoSokoban.svg?branch=master)](https://travis-ci.org/gogo40/gogoSokoban)
+[![Build Status](https://travis-ci.org/gogo40/gogoSokoban.svg?branch=master)](https://travis-ci.org/gogo40/gogoSokoban)[![Code Health](https://landscape.io/github/gogo40/gogoSokoban/master/landscape.svg?style=flat)](https://landscape.io/github/gogo40/gogoSokoban/master)
 
 gogoSokoban
 ===========
