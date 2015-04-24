@@ -1,0 +1,22 @@
+install: g++ clang
+
+language: cpp
+
+compiler:
+  - clang
+  - gcc
+  - g++
+
+script:
+  - g++ -O2 -o sokoban sokoban.cpp
+  - clang -o sokoban sokoban.cpp
+  
+branches:
+  only:
+    - master  
+  
+os:
+  - linux
+  - osx
+
+osx_image: xcode61
