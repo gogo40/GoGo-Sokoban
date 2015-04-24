@@ -18,6 +18,6 @@ install:
 #before_build:
 
 build:
-    sources: sokoban.cpp      # path to Visual Studio solution or project
+    file: sokoban.cpp      # path to Visual Studio solution or project
 
 #after_build:
