@@ -1,3 +1,9 @@
+os:
+  - linux
+  - osx
+
+osx_image: xcode61
+
 language: cpp
 
 before_script:
@@ -17,9 +23,3 @@ script:
 branches:
   only:
     - master  
-  
-os:
-  - linux
-  - osx
-
-osx_image: xcode61
