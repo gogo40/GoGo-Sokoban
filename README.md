@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/gogo40/gogoSokoban.svg?branch=master)](https://travis-ci.org/gogo40/gogoSokoban)[![Code Health](https://landscape.io/github/gogo40/gogoSokoban/master/landscape.svg?style=flat)](https://landscape.io/github/gogo40/gogoSokoban/master)[![Build Status](https://drone.io/github.com/gogo40/gogoSokoban/status.png)](https://drone.io/github.com/gogo40/gogoSokoban/latest)
 
-gogoSokoban
-===========
+GoGo-Sokoban
+============
 
 An AI to solve sokobans. 
 
